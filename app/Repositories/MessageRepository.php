@@ -13,4 +13,8 @@ class MessageRepository implements MessageRepositoryInterface {
     public function create(array $params) {
         $this->message->create($params);
     }
+
+    public function findById(string $id): ?Message {
+        return $this->message->find($id);
+    }
 }

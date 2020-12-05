@@ -46,4 +46,14 @@ class MessageController extends Controller
 
         return response()->json(['uuid' => $uuid]);
     }
+
+    public function show(string $id) {
+        $message = $this->messageRepository->findById($id);
+        $imageUrl = config('app.image_url');
+
+        return response()->json([
+            'message' => $message->content,
+            'url' => "{$imageUrl}/{$message->file_path}"
+        ]);
+    }
 }
