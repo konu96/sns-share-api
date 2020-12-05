@@ -7,6 +7,7 @@ use DB;
 use Exception;
 use Str;
 use Illuminate\Http\Request;
+use Storage;
 
 class MessageController extends Controller
 {
@@ -18,15 +19,30 @@ class MessageController extends Controller
 
     public function store(Request $request) {
         $params = $request->json()->all();
-        $content = $params['message'];
-        $uuid = Str::uuid();
-        $filePath = $uuid->toString();
 
-        $this->messageRepository->create([
-            'id' => $uuid,
-            'content' => $content,
-            'file_path' => $filePath
-        ]);
+        $image = $params['image']['data'];
+        $decodedImage = base64_decode($image);
+
+        $content = $params['message'];
+
+        $uuid = DB::transaction(function() use ($decodedImage, $content) {
+            $uuid = Str::uuid();
+            $filePath = $uuid->toString();
+            $this->messageRepository->create([
+                'id' => $uuid,
+                'content' => $content,
+                'file_path' => $filePath
+            ]);
+
+            $isSuccess = Storage::disk('s3')->put($filePath, $decodedImage);
+            if (!$isSuccess) {
+                throw new Exception('ファイルのアップロードに失敗しました。');
+            }
+
+            Storage::disk('s3')->setVisibility($filePath, 'public');
+
+            return $uuid;
+        });
 
         return response()->json(['uuid' => $uuid]);
     }
