@@ -20,7 +20,9 @@ class MessageController extends Controller
     public function store(Request $request) {
         $params = $request->json()->all();
 
-        $image = $params['image']['data'];
+        list(, $image) = explode(';', $params['image']);
+        list(, $image) = explode(',', $image);
+
         $decodedImage = base64_decode($image);
 
         $content = $params['message'];
